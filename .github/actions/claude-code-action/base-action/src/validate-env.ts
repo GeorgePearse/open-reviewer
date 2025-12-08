@@ -20,9 +20,10 @@ export function validateEnvironmentVariables() {
   }
 
   if (!useBedrock && !useVertex && !useFoundry) {
-    if (!anthropicApiKey && !claudeCodeOAuthToken) {
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    if (!anthropicApiKey && !claudeCodeOAuthToken && !openRouterApiKey) {
       errors.push(
-        "Either ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN is required when using direct Anthropic API.",
+        "Either ANTHROPIC_API_KEY, OPENROUTER_API_KEY, or CLAUDE_CODE_OAUTH_TOKEN is required.",
       );
     }
   } else if (useBedrock) {
