@@ -60,6 +60,32 @@ export OPENROUTER_API_KEY="your-key-here"
 uv run pytest -v
 ```
 
+### Setting Up Pre-commit Hooks
+
+To maintain code quality and catch issues before committing:
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install the hooks
+pre-commit install
+
+# (Optional) Run on all files to test setup
+pre-commit run --all-files
+```
+
+This will automatically run:
+- **ruff** - Fast Python linting and formatting
+- **pyright** - Type checking for Python code
+- **prettier** - TypeScript/JavaScript formatting for GitHub Actions
+- **standard checks** - Trailing whitespace, file endings, YAML/JSON validation
+
+The pre-commit configuration is in `.pre-commit-config.yaml` and targets:
+- Python files in `review_eval/` and `.github/scripts/`
+- TypeScript files in `.github/actions/`
+- Excludes test fixtures with intentionally problematic code
+
 ## Usage
 
 ```python

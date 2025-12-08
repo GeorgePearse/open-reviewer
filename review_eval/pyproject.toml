@@ -45,7 +45,60 @@ asyncio_mode = "auto"
 
 [tool.pyright]
 pythonVersion = "3.12"
-typeCheckingMode = "basic"
+typeCheckingMode = "standard"
 exclude = ["review_eval/fixtures/**", "tests/**"]
 venvPath = "."
 venv = ".venv"
+
+[tool.ruff]
+# Python files to lint/format
+target-version = "py312"
+line-length = 88
+
+# Enable these rule categories
+lint.select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "C4",  # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+    "PIE", # flake8-pie
+    "SIM", # flake8-simplify
+    "RET", # flake8-return
+    "S",   # bandit (security)
+    "C90", # mccabe complexity
+    "D",   # pydocstring
+]
+
+# Disable specific rules that may be too strict for this codebase
+lint.ignore = [
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public method
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "D105", # Missing docstring in magic method
+    "S101", # Use of assert (common in tests)
+    "B008", # Do not perform function calls in argument defaults
+]
+
+# Exclude paths
+exclude = [
+    "review_eval/fixtures/**",
+    "tests/**",
+    ".venv/**",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow print statements in scripts
+".github/scripts/*.py" = ["T201"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["review_eval"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
