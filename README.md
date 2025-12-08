@@ -17,6 +17,38 @@ Designed to work alongside Claude Code and other AI code reviewers, Open Reviewe
 - **GitHub Actions Integration** - Automated PR reviews with multi-stage processing
 - **13 Models Across 4 Tiers** - From frontier models to fast alternatives
 
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Input
+        Code[Code to Review]
+        Tests[Golden Test Suite]
+    end
+
+    subgraph Evaluator[MultiModelEvaluator]
+        direction TB
+        OR[OpenRouter API]
+        subgraph Models[Parallel Queries]
+            M1[Claude]
+            M2[GPT]
+            M3[Gemini]
+            M4[...]
+        end
+        OR --> Models
+    end
+
+    subgraph Consensus[Aggregation]
+        U[Unanimous]
+        Maj[Majority]
+        Any[Any Model]
+    end
+
+    Input --> Evaluator
+    Models --> Consensus
+    Consensus --> Result[Pass/Fail + Findings]
+```
+
 ## Quick Start
 
 ```bash
