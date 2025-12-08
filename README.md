@@ -141,7 +141,7 @@ Open Reviewer includes a GitHub Actions workflow for automated PR reviews:
 # - Posts inline comments on PRs
 ```
 
-See [docs/guide/overview.md](docs/guide/overview.md) for configuration details.
+See the [GitHub Actions Integration tutorial](https://georgepearse.github.io/open-reviewer/tutorials/github-actions-integration/) for configuration details.
 
 ## Adding Custom Tests
 
@@ -160,13 +160,12 @@ assert result.passed
 
 ## Documentation
 
-Full documentation is available in the `docs/` directory:
+Full documentation is available at [georgepearse.github.io/open-reviewer](https://georgepearse.github.io/open-reviewer/):
 
-- [Installation](docs/getting-started/installation.md)
-- [Quick Start](docs/getting-started/quickstart.md)
-- [Architecture Overview](docs/guide/overview.md)
-- [Evaluators Guide](docs/guide/evaluators.md)
-- [API Reference](docs/api/)
+- [Tutorials](https://georgepearse.github.io/open-reviewer/tutorials/) - Step-by-step learning guides
+- [How-To Guides](https://georgepearse.github.io/open-reviewer/how-to/) - Task-oriented guides
+- [Reference](https://georgepearse.github.io/open-reviewer/reference/) - API and CLI documentation
+- [Explanation](https://georgepearse.github.io/open-reviewer/explanation/) - Architecture and concepts
 
 ## Requirements
 
@@ -177,4 +176,4 @@ Full documentation is available in the `docs/` directory:
 
 ## Contributing
 
-Contributions are welcome. See [docs/contributing.md](docs/contributing.md) for guidelines.
+Contributions are welcome. See [Contributing](https://georgepearse.github.io/open-reviewer/contributing/) for guidelines.
