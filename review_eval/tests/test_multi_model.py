@@ -2,6 +2,7 @@
 
 import pytest
 from conftest import load_fixture
+
 from review_eval.models import GoldenTestCase, ModelConfig
 from review_eval.multi_model_evaluator import MultiModelEvaluator, print_multi_model_report
 
@@ -42,7 +43,9 @@ Be explicit about what issues you find."""
 
 
 @pytest.mark.asyncio
-async def test_multi_model_sql_injection(multi_model_security_evaluator: MultiModelEvaluator) -> None:
+async def test_multi_model_sql_injection(
+    multi_model_security_evaluator: MultiModelEvaluator,
+) -> None:
     """Test that multiple models catch SQL injection."""
     code = load_fixture("security", "sql_injection.py")
     test_case = GoldenTestCase(
@@ -58,12 +61,18 @@ async def test_multi_model_sql_injection(multi_model_security_evaluator: MultiMo
     print_multi_model_report(result)
 
     # At least majority should catch SQL injection
-    assert result.models_passed >= len(TEST_MODELS) // 2, f"Less than half caught SQL injection. Pass rate: {result.pass_rate:.0%}"
-    assert "injection" in [issue.lower() for issue in result.consensus_issues], "SQL injection not in consensus"
+    assert result.models_passed >= len(TEST_MODELS) // 2, (
+        f"Less than half caught SQL injection. Pass rate: {result.pass_rate:.0%}"
+    )
+    assert "injection" in [issue.lower() for issue in result.consensus_issues], (
+        "SQL injection not in consensus"
+    )
 
 
 @pytest.mark.asyncio
-async def test_multi_model_hardcoded_secrets(multi_model_security_evaluator: MultiModelEvaluator) -> None:
+async def test_multi_model_hardcoded_secrets(
+    multi_model_security_evaluator: MultiModelEvaluator,
+) -> None:
     """Test that multiple models catch hardcoded secrets."""
     code = load_fixture("security", "hardcoded_secret.py")
     test_case = GoldenTestCase(
@@ -79,7 +88,9 @@ async def test_multi_model_hardcoded_secrets(multi_model_security_evaluator: Mul
     print_multi_model_report(result)
 
     # All models should catch hardcoded secrets
-    assert result.pass_rate >= 0.5, f"Less than half caught hardcoded secrets. Pass rate: {result.pass_rate:.0%}"
+    assert result.pass_rate >= 0.5, (
+        f"Less than half caught hardcoded secrets. Pass rate: {result.pass_rate:.0%}"
+    )
 
 
 @pytest.mark.asyncio
@@ -99,7 +110,9 @@ async def test_multi_model_psycopg2(multi_model_python_evaluator: MultiModelEval
     print_multi_model_report(result)
 
     # Majority should catch psycopg2
-    assert result.models_passed >= len(TEST_MODELS) // 2, f"Less than half caught psycopg2. Pass rate: {result.pass_rate:.0%}"
+    assert result.models_passed >= len(TEST_MODELS) // 2, (
+        f"Less than half caught psycopg2. Pass rate: {result.pass_rate:.0%}"
+    )
 
 
 @pytest.mark.asyncio
@@ -132,4 +145,6 @@ Be explicit and specific about issues."""
     print(f"Unanimous issues: {result.unanimous_issues}")
     print(f"Consensus issues: {result.consensus_issues}")
     print(f"Any model found:  {result.any_model_issues}")
-    print(f"Agreement rate:   {len(result.unanimous_issues)}/{len(result.any_model_issues)} issues unanimous")
+    print(
+        f"Agreement rate:   {len(result.unanimous_issues)}/{len(result.any_model_issues)} issues unanimous"
+    )

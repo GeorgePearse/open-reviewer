@@ -70,6 +70,7 @@ nav:
     - GitHub Actions Integration: tutorials/github-actions-integration.md
   - How-To Guides:
     - how-to/index.md
+    - PR Quality Gate: how-to/pr-quality-gate.md
     - Configure Models: how-to/configure-models.md
     - Add Test Cases: how-to/add-test-cases.md
     - Setup Semantic Search: how-to/setup-semantic-search.md
@@ -89,6 +90,7 @@ nav:
   - Explanation:
     - explanation/index.md
     - Architecture: explanation/architecture.md
+    - PR Quality Scoring: explanation/pr-quality-scoring.md
     - Multi-Model Consensus: explanation/multi-model-consensus.md
     - Semantic Context: explanation/semantic-context.md
     - Token Budgets: explanation/token-budgets.md

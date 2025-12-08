@@ -1,6 +1,7 @@
 """Tests for documentation-aware evaluation."""
 
 from conftest import REPO_ROOT
+
 from review_eval.docs_loader import (
     discover_docs,
     get_doc_coverage_report,
@@ -23,7 +24,9 @@ class TestDocsDiscovery:
         docs = discover_docs(REPO_ROOT)
         agents_docs = [d for d in docs if d.doc_type == "agents" and d.scope != "global"]
         # Should find backend, cli, dbt, lib, machine_learning, portal, etc.
-        assert len(agents_docs) >= 5, f"Should find multiple AGENTS.md files, found {len(agents_docs)}"
+        assert len(agents_docs) >= 5, (
+            f"Should find multiple AGENTS.md files, found {len(agents_docs)}"
+        )
 
         scopes = {d.scope for d in agents_docs}
         expected_scopes = {"backend", "lib", "machine_learning"}
@@ -34,7 +37,9 @@ class TestDocsDiscovery:
         docs = discover_docs(REPO_ROOT, include_docs_dir=True)
         reference_docs = [d for d in docs if d.doc_type == "reference"]
         # Should find explanations, guides, references
-        assert len(reference_docs) >= 10, f"Should find many reference docs, found {len(reference_docs)}"
+        assert len(reference_docs) >= 10, (
+            f"Should find many reference docs, found {len(reference_docs)}"
+        )
 
     def test_discover_excludes_docs_directory_when_disabled(self) -> None:
         """Test that /docs can be excluded."""

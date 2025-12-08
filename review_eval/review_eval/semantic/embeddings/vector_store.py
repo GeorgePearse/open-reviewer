@@ -12,7 +12,15 @@ from typing import Any
 
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, FieldCondition, Filter, MatchValue, PayloadSchemaType, PointStruct, VectorParams
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    PayloadSchemaType,
+    PointStruct,
+    VectorParams,
+)
 
 from review_eval.semantic.models import CodeChunk, SearchResult
 
@@ -166,7 +174,7 @@ class VectorStore:
         Args:
             path: Directory path (unused for cloud Qdrant).
         """
-        pass  # Cloud Qdrant persists automatically
+        # Cloud Qdrant persists automatically
 
     def load(self, path: Path) -> bool:
         """Load the vector store from disk.
@@ -229,6 +237,8 @@ class VectorStore:
         count_before = self.size
         self.client.delete(
             collection_name=self.collection,
-            points_selector=Filter(must=[FieldCondition(key="file_path", match=MatchValue(value=file_path))]),
+            points_selector=Filter(
+                must=[FieldCondition(key="file_path", match=MatchValue(value=file_path))]
+            ),
         )
         return count_before - self.size

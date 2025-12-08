@@ -13,6 +13,7 @@ dependencies = [
     "httpx>=0.27.0",
     "qdrant-client>=1.12.0",
     "python-dotenv>=1.0.0",
+    "pyyaml>=6.0",
     "tree-sitter>=0.21.0",
     "tree-sitter-typescript>=0.21.0",
     "tree-sitter-rust>=0.21.0",
@@ -24,6 +25,10 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    "pytest-cov>=6.0.0",
+    "prek>=0.1.0",
+    "ruff>=0.8.0",
+    "pyright>=1.1.0",
 ]
 full = [
     "tree-sitter>=0.25.0",
@@ -43,9 +48,58 @@ module-root = ""
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "A", "C4", "DTZ", "ISC", "PIE", "T20", "RET", "SIM", "ARG"]
+ignore = ["E501"]  # Line too long (handled by formatter)
+
+[tool.ruff.lint.per-file-ignores]
+"**/fixtures/**" = ["ARG", "T201", "ALL"]  # Fixtures contain intentionally bad code
+"**/tests/**" = ["T201", "W293"]  # Allow print in tests for debugging
+"**/*index_repo.py" = ["T201"]  # CLI tool uses print for output
+"**/*update_embeddings.py" = ["T201"]  # CLI tool uses print for output
+"**/__main__.py" = ["T201"]  # CLI tool uses print for output
+"**/multi_model_evaluator.py" = ["T201"]  # Has print_results utility function
+"**/semantic/search.py" = ["T201", "ARG002"]  # Has verbose mode with print
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint.isort]
+known-first-party = ["review_eval"]
+
 [tool.pyright]
 pythonVersion = "3.12"
 typeCheckingMode = "basic"
 exclude = ["review_eval/fixtures/**", "tests/**"]
 venvPath = "."
 venv = ".venv"
+
+[tool.prek]
+hooks = [
+    "ruff-format",
+    "ruff-lint",
+    "pyright"
+]
+
+[tool.prek.hook.ruff-format]
+command = ["uv", "run", "ruff", "format", "."]
+description = "Format code with Ruff"
+files = '\\.py$'
+pass_filenames = false
+
+[tool.prek.hook.ruff-lint]
+command = ["uv", "run", "ruff", "check", "--fix", "."]
+description = "Lint code with Ruff"
+files = '\\.py$'
+pass_filenames = false
+
+[tool.prek.hook.pyright]
+command = ["uv", "run", "pyright"]
+description = "Type check with Pyright"
+files = '\\.py$'
+pass_filenames = false

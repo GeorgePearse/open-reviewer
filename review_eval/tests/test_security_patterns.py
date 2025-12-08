@@ -2,6 +2,7 @@
 
 import pytest
 from conftest import load_fixture
+
 from review_eval.evaluator import ReviewEvaluator
 from review_eval.models import GoldenTestCase
 
@@ -31,7 +32,9 @@ def test_security_vulnerabilities(
 
     result = security_evaluator.evaluate(test_case)
 
-    assert result.passed, f"Failed to catch issues in {fixture_file}. Matched: {result.matched_issues}, Missed: {result.missed_issues}"
+    assert result.passed, (
+        f"Failed to catch issues in {fixture_file}. Matched: {result.matched_issues}, Missed: {result.missed_issues}"
+    )
 
 
 def test_catches_sql_injection_details(security_evaluator: ReviewEvaluator) -> None:
@@ -67,8 +70,12 @@ def test_catches_hardcoded_api_keys(security_evaluator: ReviewEvaluator) -> None
     result = security_evaluator.evaluate(test_case)
 
     review_lower = result.review_text.lower()
-    found_hardcoded = "hardcoded" in review_lower or "hard-coded" in review_lower or "hard coded" in review_lower
-    assert found_hardcoded, f"Failed to flag hardcoded secrets. Response: {result.review_text[:500]}"
+    found_hardcoded = (
+        "hardcoded" in review_lower or "hard-coded" in review_lower or "hard coded" in review_lower
+    )
+    assert found_hardcoded, (
+        f"Failed to flag hardcoded secrets. Response: {result.review_text[:500]}"
+    )
 
 
 def test_catches_shell_injection(security_evaluator: ReviewEvaluator) -> None:

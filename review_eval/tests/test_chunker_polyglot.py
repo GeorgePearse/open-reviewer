@@ -1,5 +1,6 @@
 import pytest
-from review_eval.semantic.embeddings.chunker import chunk_code, TREE_SITTER_AVAILABLE
+
+from review_eval.semantic.embeddings.chunker import TREE_SITTER_AVAILABLE, chunk_code
 
 
 @pytest.mark.skipif(not TREE_SITTER_AVAILABLE, reason="Tree-sitter not available")

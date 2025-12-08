@@ -295,7 +295,9 @@ def build_docs_prompt(
     if truncated_docs:
         truncated_list = ", ".join(truncated_docs[:5])
         ellipsis = "..." if len(truncated_docs) > 5 else ""
-        parts.append(f"\n_Note: {len(truncated_docs)} additional docs truncated: {truncated_list}{ellipsis}_")
+        parts.append(
+            f"\n_Note: {len(truncated_docs)} additional docs truncated: {truncated_list}{ellipsis}_"
+        )
 
     return "\n\n---\n\n".join(parts)
 

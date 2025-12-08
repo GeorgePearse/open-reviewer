@@ -161,7 +161,9 @@ class SemanticSearch:
         )
 
         if exclude_same_file:
-            results.results = [r for r in results.results if r.chunk.file_path != chunk.file_path][:top_k]
+            results.results = [r for r in results.results if r.chunk.file_path != chunk.file_path][
+                :top_k
+            ]
 
         return results
 

@@ -1,6 +1,179 @@
 # CLI Tools
 
-Command-line tools for repository indexing and embedding management.
+Command-line tools for PR quality scoring, repository indexing, and embedding management.
+
+## score
+
+Calculate PR quality score based on multiple metrics.
+
+```bash
+cd review_eval
+uv run python -m review_eval score [OPTIONS]
+```
+
+### Usage
+
+```bash
+# Run scoring with all metrics
+uv run python -m review_eval score \
+  --config ../.github/reviewer-gate.yaml \
+  --junit junit.xml \
+  --coverage coverage.xml \
+  --baseline-coverage 85.0 \
+  --static-analysis ruff-results.json,pyright-results.json \
+  --output pr-score.json \
+  --fail-on-error
+
+# Minimal scoring with just tests
+uv run python -m review_eval score \
+  --junit junit.xml \
+  --threshold 70
+
+# Custom threshold without config file
+uv run python -m review_eval score \
+  --junit junit.xml \
+  --coverage coverage.xml \
+  --baseline-coverage 85.0 \
+  --threshold 75 \
+  --fail-on-error
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--config PATH` | Path to YAML configuration file (e.g., `.github/reviewer-gate.yaml`) |
+| `--junit PATH` | Path to JUnit XML test results |
+| `--coverage PATH` | Path to Cobertura XML coverage report |
+| `--baseline-coverage FLOAT` | Baseline coverage percentage for delta calculation (0-100) |
+| `--static-analysis PATH[,PATH]` | Comma-separated paths to ruff and pyright JSON outputs |
+| `--ai-review PATH` | Path to AI review results JSON (future feature) |
+| `--threshold FLOAT` | Minimum passing score (0-100). Overrides config. |
+| `--output PATH` | Path to write JSON results (default: stdout) |
+| `--fail-on-error` | Exit with code 1 if score below threshold |
+
+### Configuration File
+
+The `--config` option loads scoring configuration from a YAML file:
+
+```yaml
+scoring:
+  threshold: 75
+
+  weights:
+    tests: 0.40
+    coverage: 0.30
+    static_analysis: 0.30
+    ai_review: 0.00
+
+  critical_penalties:
+    security_vulnerability: 100
+    critical_test_failure: 50
+
+  tolerance:
+    coverage_delta: 0.1
+```
+
+See [PR Quality Gate Setup](../how-to/pr-quality-gate.md) for configuration details.
+
+### Output Format
+
+**JSON Output** (`--output pr-score.json`):
+
+```json
+{
+  "total_score": 87.5,
+  "status": "PASS",
+  "threshold": 75,
+  "blocking_factors": [],
+  "breakdown": {
+    "tests": {
+      "category": "tests",
+      "raw_value": 95.0,
+      "normalized_score": 95.0,
+      "weight": 0.4,
+      "details": {
+        "passed": 38,
+        "total": 40
+      }
+    },
+    "coverage": {
+      "category": "coverage",
+      "raw_value": 2.5,
+      "normalized_score": 82.0,
+      "weight": 0.3,
+      "details": {
+        "delta": "+2.5%"
+      }
+    }
+  },
+  "timestamp": "2025-01-15T10:30:00Z"
+}
+```
+
+**Console Output**:
+
+```
+PR Quality Score: 87.5/100
+
+Status: PASS (threshold: 75)
+
+Breakdown:
+  Tests:            95.0/100 (weight: 40%) - 38/40 passed
+  Coverage:         82.0/100 (weight: 30%) - +2.5%
+  Static Analysis:  85.0/100 (weight: 30%) - 3 errors
+```
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Score above threshold or `--fail-on-error` not set |
+| 1 | Score below threshold and `--fail-on-error` set |
+| 2 | Invalid arguments or configuration error |
+
+### Examples
+
+**Local Testing**:
+
+```bash
+cd review_eval
+
+# Generate test reports
+uv run pytest --junitxml=junit.xml --cov --cov-report=xml
+
+# Generate static analysis reports
+uv run ruff check . --output-format json > ruff-results.json
+uv run pyright --outputjson > pyright-results.json
+
+# Calculate score
+uv run python -m review_eval score \
+  --config ../.github/reviewer-gate.yaml \
+  --junit junit.xml \
+  --coverage coverage.xml \
+  --baseline-coverage 85.0 \
+  --static-analysis ruff-results.json,pyright-results.json
+```
+
+**GitHub Actions**:
+
+```yaml
+- name: Calculate PR Score
+  run: |
+    cd review_eval
+    uv run python -m review_eval score \
+      --config ../.github/reviewer-gate.yaml \
+      --junit junit.xml \
+      --coverage coverage.xml \
+      --baseline-coverage ${{ steps.baseline.outputs.baseline_coverage }} \
+      --static-analysis ruff-results.json,pyright-results.json \
+      --output pr-score.json \
+      --fail-on-error
+```
+
+See [PR Quality Gate](../how-to/pr-quality-gate.md) for complete setup instructions.
+
+---
 
 ## index_repo
 

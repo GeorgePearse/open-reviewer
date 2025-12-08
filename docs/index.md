@@ -45,6 +45,7 @@ flowchart LR
 ## Features
 
 - :material-check-all: **Multi-Model Consensus** - Query multiple LLMs and aggregate findings
+- :material-gate: **PR Quality Gate** - Automated quality scoring (0-100) with multi-metric analysis
 - :material-test-tube: **Golden Test Suite** - 15+ pre-built test cases covering common anti-patterns
 - :material-language-python: **Language Support** - Python, TypeScript, SQL, and security-focused tests
 - :material-magnify: **Semantic Evaluation** - Embedding-based similarity, AST parsing, repository maps

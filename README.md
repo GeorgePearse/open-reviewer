@@ -11,6 +11,7 @@ Designed to work alongside Claude Code and other AI code reviewers, Open Reviewe
 ## Features
 
 - **Multi-Model Consensus** - Query multiple LLMs and aggregate findings (unanimous, majority, any)
+- **PR Quality Gate** - Automated scoring (0-100) with multi-metric analysis (tests, coverage, static analysis)
 - **Golden Test Suite** - 15+ pre-built test cases covering common anti-patterns
 - **Language Support** - Python, TypeScript, SQL, and security-focused tests
 - **Semantic Evaluation** - Embedding-based similarity, AST parsing, repository maps
@@ -142,6 +143,29 @@ Open Reviewer includes a GitHub Actions workflow for automated PR reviews:
 ```
 
 See the [GitHub Actions Integration tutorial](https://georgepearse.github.io/open-reviewer/tutorials/github-actions-integration/) for configuration details.
+
+## PR Quality Gate
+
+Automatically score pull requests (0-100) based on multiple quality metrics:
+
+- **Tests** (40%): Test pass rate from pytest
+- **Coverage** (30%): Code coverage delta vs baseline
+- **Static Analysis** (30%): Ruff linting + Pyright type checking
+
+```bash
+# Run locally
+cd review_eval
+uv run pytest --junitxml=junit.xml --cov --cov-report=xml
+uv run python -m review_eval score \
+  --config ../.github/reviewer-gate.yaml \
+  --junit junit.xml \
+  --coverage coverage.xml \
+  --baseline-coverage 85.0
+```
+
+The workflow automatically comments on PRs with score breakdowns and blocks merges below the threshold.
+
+See the [PR Quality Gate guide](https://georgepearse.github.io/open-reviewer/how-to/pr-quality-gate/) for setup instructions.
 
 ## Adding Custom Tests
 

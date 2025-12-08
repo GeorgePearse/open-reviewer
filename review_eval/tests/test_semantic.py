@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+
 from review_eval.semantic import (
     ASTParser,
     CodeChunk,
@@ -253,9 +254,36 @@ class TestVectorStore:
     def test_remove_by_file(self) -> None:
         """Test removing chunks by file path."""
         chunks = [
-            CodeChunk(id="test_rm_1", file_path="a.py", chunk_type="function", name="f1", code="", language="python", start_line=1, end_line=1),
-            CodeChunk(id="test_rm_2", file_path="a.py", chunk_type="function", name="f2", code="", language="python", start_line=1, end_line=1),
-            CodeChunk(id="test_rm_3", file_path="b.py", chunk_type="function", name="f3", code="", language="python", start_line=1, end_line=1),
+            CodeChunk(
+                id="test_rm_1",
+                file_path="a.py",
+                chunk_type="function",
+                name="f1",
+                code="",
+                language="python",
+                start_line=1,
+                end_line=1,
+            ),
+            CodeChunk(
+                id="test_rm_2",
+                file_path="a.py",
+                chunk_type="function",
+                name="f2",
+                code="",
+                language="python",
+                start_line=1,
+                end_line=1,
+            ),
+            CodeChunk(
+                id="test_rm_3",
+                file_path="b.py",
+                chunk_type="function",
+                name="f3",
+                code="",
+                language="python",
+                start_line=1,
+                end_line=1,
+            ),
         ]
         embeddings = [[1.0, 0.0, 0.0, 0.0]] * 3
         self.store.add(chunks, embeddings)

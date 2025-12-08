@@ -1,0 +1,253 @@
+name: PR Quality Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  quality-gate:
+    name: Calculate PR Quality Score
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for coverage delta
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        working-directory: review_eval
+        run: |
+          uv sync --all-extras
+
+      - name: Run tests with coverage
+        working-directory: review_eval
+        run: |
+          uv run pytest \
+            --junitxml=junit.xml \
+            --cov=review_eval \
+            --cov-report=xml \
+            --cov-report=term
+        continue-on-error: true  # Don't fail the workflow, let scoring decide
+
+      - name: Run ruff linting
+        working-directory: review_eval
+        run: |
+          uv run ruff check . --output-format json > ruff-results.json || true
+        continue-on-error: true
+
+      - name: Run pyright type checking
+        working-directory: review_eval
+        run: |
+          uv run pyright --outputjson > pyright-results.json || true
+        continue-on-error: true
+
+      - name: Calculate baseline coverage
+        id: baseline
+        working-directory: review_eval
+        run: |
+          # Get coverage from main branch for comparison
+          git fetch origin main:main || true
+          git checkout main -- coverage.xml 2>/dev/null || echo "No baseline coverage"
+
+          if [ -f coverage.xml ]; then
+            # Extract line-rate from baseline coverage.xml
+            BASELINE=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); print(float(tree.getroot().get('line-rate', 0)) * 100)")
+            echo "baseline_coverage=$BASELINE" >> $GITHUB_OUTPUT
+            rm coverage.xml  # Clean up so we use the current coverage.xml
+          else
+            echo "baseline_coverage=0" >> $GITHUB_OUTPUT
+          fi
+
+          git checkout ${{ github.sha }}  # Return to PR branch
+
+      - name: Calculate PR Score
+        id: score
+        working-directory: review_eval
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: |
+          # Build the score command
+          # Note: AI review integration is optional
+          # To enable, add: --ai-review ai-review-results.json
+          # See docs for how to aggregate review.yml findings
+          SCORE_CMD="uv run python -m review_eval score \
+            --config ../.github/reviewer-gate.yaml \
+            --junit junit.xml \
+            --coverage coverage.xml \
+            --baseline-coverage ${{ steps.baseline.outputs.baseline_coverage }} \
+            --static-analysis ruff-results.json,pyright-results.json \
+            --output pr-score.json \
+            --fail-on-error"
+
+          # Run scoring (capture exit code)
+          set +e
+          $SCORE_CMD
+          EXIT_CODE=$?
+          set -e
+
+          # Read the score results
+          if [ -f pr-score.json ]; then
+            SCORE=$(python3 -c "import json; data=json.load(open('pr-score.json')); print(data['total_score'])")
+            STATUS=$(python3 -c "import json; data=json.load(open('pr-score.json')); print(data['status'])")
+            echo "total_score=$SCORE" >> $GITHUB_OUTPUT
+            echo "status=$STATUS" >> $GITHUB_OUTPUT
+          else
+            echo "total_score=0" >> $GITHUB_OUTPUT
+            echo "status=FAIL" >> $GITHUB_OUTPUT
+          fi
+
+          exit $EXIT_CODE
+        continue-on-error: true  # Continue to post comment even if score fails
+
+      - name: Generate score breakdown
+        id: breakdown
+        if: always()
+        working-directory: review_eval
+        run: |
+          if [ -f pr-score.json ]; then
+            # Generate markdown breakdown
+            python3 << 'EOF' > breakdown.md
+import json
+
+with open('pr-score.json') as f:
+    data = json.load(f)
+
+score = data['total_score']
+status = data['status']
+threshold = data['threshold']
+breakdown = data['breakdown']
+blocking = data.get('blocking_factors', [])
+
+# Status emoji
+status_emoji = "✅" if status == "PASS" else "❌"
+
+print(f"## {status_emoji} PR Quality Score: {score:.1f}/100")
+print()
+print(f"**Status**: {status}")
+print(f"**Threshold**: {threshold}")
+print()
+print("### 📊 Breakdown")
+print()
+print("| Metric | Score | Weight | Details |")
+print("|--------|-------|--------|---------|")
+
+for category, result in breakdown.items():
+    score_val = result['normalized_score']
+    weight = result['weight']
+    raw = result.get('raw_value', 0)
+
+    # Status icon
+    icon = "✓" if result.get('error_message') is None else "✗"
+
+    # Category name
+    cat_name = category.replace('_', ' ').title()
+
+    # Details summary
+    details = result.get('details', {})
+    if category == 'tests':
+        detail_str = f"{details.get('passed', 0)}/{details.get('total', 0)} passed"
+    elif category == 'coverage':
+        detail_str = details.get('delta', '0%')
+    elif category == 'static_analysis':
+        detail_str = f"{details.get('total_errors', 0)} errors"
+    elif category == 'ai_review':
+        detail_str = f"{details.get('total_consensus_issues', 0)} issues"
+    else:
+        detail_str = ""
+
+    print(f"| {icon} {cat_name} | {score_val:.1f}/100 | {weight:.0%} | {detail_str} |")
+
+if blocking:
+    print()
+    print("### ⚠️ Blocking Factors")
+    print()
+    for factor in blocking:
+        print(f"- {factor}")
+
+print()
+print("---")
+print("*Generated by [Open Reviewer PR Gate](https://github.com/anthropics/open-reviewer)*")
+EOF
+
+            cat breakdown.md
+          else
+            echo "❌ PR Quality Score: Unable to calculate" > breakdown.md
+            echo "" >> breakdown.md
+            echo "Score calculation failed. Check logs for details." >> breakdown.md
+          fi
+
+      - name: Comment PR with score
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read the breakdown markdown
+            let body;
+            try {
+              body = fs.readFileSync('review_eval/breakdown.md', 'utf8');
+            } catch (error) {
+              body = '❌ **PR Quality Score: Error**\n\nFailed to calculate score. Check workflow logs.';
+            }
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('PR Quality Score')
+            );
+
+            // Update or create comment
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+      - name: Upload score artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-score-results
+          path: |
+            review_eval/pr-score.json
+            review_eval/junit.xml
+            review_eval/coverage.xml
+            review_eval/ruff-results.json
+            review_eval/pyright-results.json
+          retention-days: 30
+
+      - name: Fail if score below threshold
+        if: steps.score.outputs.status == 'FAIL'
+        run: |
+          echo "::error::PR score (${{ steps.score.outputs.total_score }}) is below threshold"
+          exit 1
