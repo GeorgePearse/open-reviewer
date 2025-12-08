@@ -69,7 +69,8 @@ jobs:
       - name: Fetch similar code context
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          QDRANT_URL: https://eedd68df-0712-49b8-8761-d7c7a59decd8.us-east4-0.gcp.cloud.qdrant.io:6333
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
         run: |
           cd review_eval
