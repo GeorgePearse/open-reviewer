@@ -1,33 +1,29 @@
 name: Claude Code Review
 
 on:
+  # PR Reviews - triggered for ALL PRs (no path restrictions)
   pull_request:
     types: [opened, synchronize, ready_for_review]
-    branches:
-      - main
-    paths:
-      - "backend/**"
-      - "machine_learning/**"
-      - "lib/python/**"
-      - "portal/**"
-      - "infrastructure/**"
-      - "cli/**"
-      - "dbt/**"
-      - "controlunit/**"
-      - "liquibase/**"
-      - "!**/*.md"
-      - "!**/*.lock"
-      - "!**/uv.lock"
+
+  # Comment-triggered tasks (@claude mentions in PRs and issues)
+  issue_comment:
+    types: [created]
+
+  # Issue-triggered tasks (label or assignment)
+  issues:
+    types: [opened, labeled, assigned]
 
 permissions:
-  contents: read
+  contents: write        # For creating branches and commits
   pull-requests: write
+  issues: write          # For issue operations
   id-token: write
 
 jobs:
   # Stage 1: Parse AGENTS.md and create review matrix
   prepare-review:
     name: Prepare Review Matrix
+    if: github.event_name == 'pull_request'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
@@ -188,6 +184,7 @@ jobs:
   # Stage 3: Security review (runs in parallel with Stage 1, independent of chunks)
   review-security:
     name: Security Review
+    if: github.event_name == 'pull_request'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     concurrency:
       group: pr-claude-security-${{ github.event.pull_request.number }}
@@ -240,3 +237,60 @@ jobs:
 
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Read,Glob,Grep"
+
+  # ============================================================
+  # COMMENT-TRIGGERED TASKS (@claude mentions)
+  # ============================================================
+  handle-comment:
+    name: Handle @claude Comment
+    if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Handle @claude request
+        uses: ./.github/actions/claude-code-action
+        with:
+          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          model: "anthropic/claude-3.5-sonnet"
+          trigger_phrase: "@claude"
+          track_progress: true
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh issue comment:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
+
+  # ============================================================
+  # ISSUE-TRIGGERED TASKS (claude label or assignment)
+  # ============================================================
+  handle-issue:
+    name: Handle Claude Issue
+    if: |
+      github.event_name == 'issues' &&
+      (contains(github.event.issue.labels.*.name, 'claude') ||
+       github.event.action == 'assigned')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Work on issue
+        uses: ./.github/actions/claude-code-action
+        with:
+          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          model: "anthropic/claude-3.5-sonnet"
+          label_trigger: "claude"
+          track_progress: true
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr:*),Bash(gh issue:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
