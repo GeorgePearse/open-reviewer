@@ -1,0 +1,242 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "machine_learning/**"
+      - "lib/python/**"
+      - "portal/**"
+      - "infrastructure/**"
+      - "cli/**"
+      - "dbt/**"
+      - "controlunit/**"
+      - "liquibase/**"
+      - "!**/*.md"
+      - "!**/*.lock"
+      - "!**/uv.lock"
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  # Stage 1: Parse AGENTS.md and create review matrix
+  prepare-review:
+    name: Prepare Review Matrix
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    outputs:
+      matrix: ${{ steps.create-matrix.outputs.matrix }}
+      has_chunks: ${{ steps.create-matrix.outputs.has_chunks }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Get changed files
+        run: |
+          git diff --name-only origin/main...HEAD > changed_files.txt
+          echo "Changed files:"
+          cat changed_files.txt
+
+      - name: Parse AGENTS.md files
+        run: |
+          python .github/scripts/parse_agents_md.py \
+            --base-path . \
+            --output all_chunks.json
+          echo "Total chunks parsed: $(jq '.total_chunks' all_chunks.json)"
+
+      - name: Filter relevant chunks
+        run: |
+          python .github/scripts/filter_chunks.py \
+            --chunks all_chunks.json \
+            --changed-files changed_files.txt \
+            --output filtered_chunks.json
+          echo "Filtered chunks: $(jq '.total_chunks' filtered_chunks.json) / $(jq '.filtered_from' filtered_chunks.json)"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install review_eval dependencies
+        run: |
+          cd review_eval
+          uv sync
+
+      - name: Fetch similar code context
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: |
+          cd review_eval
+          uv run python ${{ github.workspace }}/.github/scripts/fetch_similar_code.py \
+            --changed-files ${{ github.workspace }}/changed_files.txt \
+            --repo-root ${{ github.workspace }} \
+            --output ${{ github.workspace }}/similar_code.md \
+            --top-k 3 \
+            --min-similarity 0.5
+          echo "Similar code context:"
+          cat ${{ github.workspace }}/similar_code.md || echo "(none found)"
+
+      - name: Create review matrix
+        id: create-matrix
+        run: |
+          # Group chunks by domain, batch 3 per job, max 10 jobs
+          MATRIX=$(python -c "
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path('filtered_chunks.json').read_text())
+          chunks = data['chunks']
+
+          if not chunks:
+              print(json.dumps({'include': []}))
+          else:
+              by_domain = {}
+              for chunk in chunks:
+                  domain = chunk['domain']
+                  if domain not in by_domain:
+                      by_domain[domain] = []
+                  by_domain[domain].append(chunk['id'])
+
+              jobs = []
+              for domain, chunk_ids in by_domain.items():
+                  for i in range(0, len(chunk_ids), 10):
+                      batch = chunk_ids[i:i+10]
+                      jobs.append({
+                          'domain': domain,
+                          'chunk_ids': ','.join(batch),
+                          'job_name': f'{domain}-batch-{i//10 + 1}'
+                      })
+
+              jobs = jobs[:20]  # Limit parallel jobs
+              print(json.dumps({'include': jobs}))
+          ")
+
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "Matrix: $MATRIX"
+
+          CHUNK_COUNT=$(jq '.total_chunks' filtered_chunks.json)
+          if [ "$CHUNK_COUNT" -gt 0 ]; then
+            echo "has_chunks=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_chunks=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chunks-data
+          path: |
+            all_chunks.json
+            filtered_chunks.json
+            similar_code.md
+
+  # Stage 2: Matrix-based chunk reviews (parallel)
+  review-chunks:
+    name: Review ${{ matrix.job_name }}
+    needs: prepare-review
+    if: needs.prepare-review.outputs.has_chunks == 'true'
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    concurrency:
+      group: pr-claude-${{ matrix.job_name }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix: ${{ fromJson(needs.prepare-review.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: chunks-data
+
+      - name: Generate review prompt
+        run: |
+          python .github/scripts/generate_review_prompt.py \
+            --chunk-ids "${{ matrix.chunk_ids }}" \
+            --chunks filtered_chunks.json \
+            --similar-code similar_code.md > review_prompt.txt
+          echo "Generated prompt for chunks: ${{ matrix.chunk_ids }}"
+          cat review_prompt.txt
+
+      - name: Run Claude review for chunks
+        uses: ./.github/actions/claude-code-action
+        with:
+          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          model: "anthropic/claude-3.5-sonnet"
+          track_progress: true
+          prompt_file: review_prompt.txt
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Read,Glob,Grep"
+
+  # Stage 3: Security review (runs in parallel with Stage 1, independent of chunks)
+  review-security:
+    name: Security Review
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    concurrency:
+      group: pr-claude-security-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Security-Focused Review
+        uses: ./.github/actions/claude-code-action
+        with:
+          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          model: "anthropic/claude-3.5-sonnet"
+          track_progress: true
+          prompt: |
+            Perform a security-focused review of ALL changes in this PR.
+
+            ## OWASP Top 10 Checks
+            1. **Injection**: SQL, command, LDAP, XPath injection
+            2. **Broken Auth**: Hardcoded credentials, weak session management
+            3. **Sensitive Data**: Secrets in code, unencrypted data
+            4. **XXE**: Unsafe XML parsing
+            5. **Broken Access Control**: Missing authorization checks
+            6. **Security Misconfiguration**: Debug modes, default credentials
+            7. **XSS**: Unsanitized user input in HTML
+            8. **Insecure Deserialization**: pickle, yaml.load
+            9. **Vulnerable Components**: Known CVEs in dependencies
+            10. **Insufficient Logging**: Missing audit trails
+
+            ## Specific Patterns to Flag
+            - `subprocess.run(..., shell=True)` with user input
+            - `yaml.load()` without Loader parameter
+            - SQL queries with f-strings or .format()
+            - Hardcoded API keys, passwords, tokens
+            - `eval()` or `exec()` with external input
+            - Missing input validation on API endpoints
+            - Secrets in environment variables without Secret Manager
+            - Disabled SSL/TLS verification
+            - Weak cryptographic algorithms
+
+            ## Severity Guidelines
+            - CRITICAL: Exploitable vulnerabilities, credential exposure
+            - HIGH: Security weaknesses that need immediate fix
+            - MEDIUM: Security improvements recommended
+            - LOW: Defense-in-depth suggestions
+
+            Post inline comments with severity.
+            Use ```suggestion blocks for fixes.
+
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Read,Glob,Grep"
