@@ -273,7 +273,8 @@ jobs:
     if: |
       github.event_name == 'issues' &&
       (contains(github.event.issue.labels.*.name, 'claude') ||
-       github.event.action == 'assigned')
+       github.event.action == 'assigned' ||
+       contains(github.event.issue.body, '@claude'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
