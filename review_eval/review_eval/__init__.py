@@ -23,6 +23,12 @@ from review_eval.multi_model_evaluator import (
     print_multi_model_report,
 )
 from review_eval.semantic_evaluator import SemanticEvaluator, create_semantic_evaluator
+from review_eval.health_check import (
+    get_health_status,
+    create_fastapi_health_app,
+    create_flask_health_app,
+    run_health_server,
+)
 
 __all__ = [
     "BENCHMARK_MODELS",
@@ -38,9 +44,13 @@ __all__ = [
     "ReviewResult",
     "SemanticEvaluator",
     "build_docs_prompt",
+    "create_fastapi_health_app",
+    "create_flask_health_app",
     "create_semantic_evaluator",
     "discover_docs",
     "get_doc_coverage_report",
+    "get_health_status",
     "print_multi_model_report",
+    "run_health_server",
     "select_docs_for_path",
 ]

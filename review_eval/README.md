@@ -166,3 +166,80 @@ test_case = GoldenTestCase(
 result = evaluator.evaluate(test_case)
 assert result.passed
 ```
+
+## Health Check Endpoint
+
+Open Reviewer includes a health check endpoint to verify the service is running properly. This returns a JSON response with status information and timestamp.
+
+### Basic Usage
+
+```python
+from review_eval import get_health_status
+
+# Get health status programmatically
+status = get_health_status()
+print(status)
+# Output: {
+#   "status": "healthy",
+#   "timestamp": "2024-12-08T14:30:00.000Z",
+#   "service": "open-reviewer",
+#   "version": "0.1.0",
+#   "uptime": 1234567.89
+# }
+```
+
+### Run as Web Service
+
+```bash
+# Using FastAPI (default)
+python -m review_eval.health_check
+
+# Specify port
+python -m review_eval.health_check 8080
+
+# Use Flask instead
+python -m review_eval.health_check flask
+
+# Specify port and framework
+python -m review_eval.health_check 8080 flask
+```
+
+### Programmatic Server
+
+```python
+from review_eval import run_health_server
+
+# Run FastAPI server
+run_health_server(port=8000, framework="fastapi")
+
+# Run Flask server
+run_health_server(port=8000, framework="flask")
+```
+
+### Health Check Dependencies
+
+To use the web server functionality, install optional dependencies:
+
+```bash
+# For FastAPI (recommended)
+uv sync --extra server
+
+# Or manually
+pip install fastapi uvicorn flask
+```
+
+### Endpoints
+
+- `GET /health` - Returns health status JSON
+- `GET /` - Same as `/health` (root endpoint)
+
+Example response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-12-08T14:30:00.000Z",
+  "service": "open-reviewer",
+  "version": "0.1.0",
+  "uptime": 1234567.89
+}
+```

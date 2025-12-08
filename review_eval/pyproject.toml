@@ -30,6 +30,11 @@ full = [
     "tree-sitter-python>=0.25.0",
     "networkx>=3.0",
 ]
+server = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "flask>=3.0.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.9.6,<0.10.0"]
