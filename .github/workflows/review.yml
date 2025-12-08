@@ -68,7 +68,7 @@ jobs:
 
       - name: Fetch similar code context
         env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
         run: |
@@ -174,8 +174,8 @@ jobs:
       - name: Run Claude review for chunks
         uses: ./.github/actions/claude-code-action
         with:
-          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
-          model: "anthropic/claude-3.5-sonnet"
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
           track_progress: true
           prompt_file: review_prompt.txt
           claude_args: |
@@ -197,8 +197,8 @@ jobs:
       - name: Security-Focused Review
         uses: ./.github/actions/claude-code-action
         with:
-          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
-          model: "anthropic/claude-3.5-sonnet"
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
           track_progress: true
           prompt: |
             Perform a security-focused review of ALL changes in this PR.
@@ -258,8 +258,8 @@ jobs:
       - name: Handle @claude request
         uses: ./.github/actions/claude-code-action
         with:
-          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
-          model: "anthropic/claude-3.5-sonnet"
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
           trigger_phrase: "@claude"
           track_progress: true
           claude_args: |
@@ -288,8 +288,8 @@ jobs:
       - name: Work on issue
         uses: ./.github/actions/claude-code-action
         with:
-          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
-          model: "anthropic/claude-3.5-sonnet"
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
           label_trigger: "claude"
           track_progress: true
           claude_args: |
