@@ -19,6 +19,12 @@ Flag these anti-patterns:
 - Missing type annotations on functions
 - Any types without justification
 - utils/misc modules (create purposeful packages instead)
+- Missing await on coroutine calls (returns coroutine object)
+- Using time.sleep() in async functions (use asyncio.sleep instead)
+- Using requests library in async functions (use aiohttp instead)
+- Calling asyncio.run() inside async context (not allowed)
+- Fire-and-forget asyncio.create_task() without proper reference or error handling
+- Sync iteration over async iterators (need async for loop)
 
 Be explicit about what issues you find. Mention the specific anti-pattern names."""
     return ReviewEvaluator(prompt)

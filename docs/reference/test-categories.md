@@ -84,6 +84,53 @@ def calculate_tax(): ...
 
 **Expected issues:** `utils`, `cohesion`, `single responsibility`
 
+### Async/Await Anti-Patterns
+
+Common mistakes when working with Python's async/await functionality.
+
+```python
+# Bad: Missing await on coroutine
+async def fetch_data():
+    result = asyncio.sleep(1)  # Returns coroutine object
+    return result
+
+# Good: Properly awaited
+async def fetch_data():
+    result = await asyncio.sleep(1)
+    return result
+```
+
+```python
+# Bad: Blocking calls in async functions
+async def process_data():
+    time.sleep(2)  # Blocks event loop
+    response = requests.get("https://api.com")  # Blocking
+    return response
+
+# Good: Non-blocking alternatives
+async def process_data():
+    await asyncio.sleep(2)
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://api.com") as response:
+            return await response.json()
+```
+
+```python
+# Bad: Fire-and-forget tasks without references
+async def start_background_work():
+    asyncio.create_task(background_task())  # May be garbage collected
+    return "started"
+
+# Good: Proper task management
+async def start_background_work():
+    task = asyncio.create_task(background_task())
+    background_tasks.add(task)  # Keep reference
+    task.add_done_callback(background_tasks.discard)
+    return "started"
+```
+
+**Expected issues:** `await`, `asyncio.sleep`, `aiohttp`, `asyncio.run`, `create_task`, `async for`, `event loop`
+
 ---
 
 ## TypeScript Anti-Patterns
@@ -286,7 +333,7 @@ See [How-To: Add Test Cases](../how-to/add-test-cases.md) for details.
 
 | Category | Test Count | Focus |
 |----------|-----------|-------|
-| Python | 5 | Types, libraries, structure |
+| Python | 6 | Types, libraries, structure, async/await |
 | TypeScript | 4 | Types, patterns, exports |
 | SQL | 3 | Naming, performance, PostgreSQL |
 | Security | 3 | Injection, secrets, commands |
