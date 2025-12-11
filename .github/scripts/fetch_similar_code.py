@@ -23,6 +23,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 
 def check_env_vars() -> list[str]:
@@ -37,11 +38,11 @@ def check_env_vars() -> list[str]:
 async def find_similar_for_file(
     file_path: Path,
     repo_root: Path,
-    client,
-    store,
+    client: Any,  # EmbeddingClient from review_eval
+    store: Any,  # VectorStore from review_eval
     top_k: int = 3,
     min_similarity: float = 0.5,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Find similar code for a single file."""
     # Read the file content
     try:
@@ -70,7 +71,7 @@ async def find_similar_for_file(
     # Filter out results from the same file and exclude venv/vendor paths
     rel_path = str(file_path.relative_to(repo_root))
     exclude_patterns = (".venv/", "/venv/", "site-packages/", "node_modules/", "__pycache__/")
-    filtered = []
+    filtered: list[dict[str, Any]] = []
     for r in results:
         # Skip same file and excluded paths
         if r.chunk.file_path == rel_path:
@@ -98,7 +99,7 @@ async def main_async(
     repo_root: Path,
     top_k: int = 3,
     min_similarity: float = 0.5,
-) -> dict[str, list[dict]]:
+) -> dict[str, list[dict[str, Any]]]:
     """Find similar code for all changed files."""
     # Import here to avoid issues when env vars not set
     sys.path.insert(0, str(repo_root / "review_eval"))
@@ -113,7 +114,7 @@ async def main_async(
         print("Warning: Qdrant index is empty. Run index_repo.py first.", file=sys.stderr)
         return {}
 
-    results = {}
+    results: dict[str, list[dict[str, Any]]] = {}
     for file_path in changed_files:
         if not file_path.exists():
             continue
@@ -128,7 +129,7 @@ async def main_async(
     return results
 
 
-def format_as_markdown(results: dict[str, list[dict]]) -> str:
+def format_as_markdown(results: dict[str, list[dict[str, Any]]]) -> str:
     """Format results as markdown for Claude context."""
     if not results:
         return ""
@@ -148,7 +149,7 @@ def format_as_markdown(results: dict[str, list[dict]]) -> str:
     return "\n".join(lines)
 
 
-def format_as_json(results: dict[str, list[dict]]) -> str:
+def format_as_json(results: dict[str, list[dict[str, Any]]]) -> str:
     """Format results as JSON."""
     return json.dumps(results, indent=2)
 
