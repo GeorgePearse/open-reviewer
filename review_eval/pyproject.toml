@@ -74,7 +74,7 @@ known-first-party = ["review_eval"]
 
 [tool.pyright]
 pythonVersion = "3.12"
-typeCheckingMode = "basic"
+typeCheckingMode = "standard"
 exclude = ["review_eval/fixtures/**", "tests/**"]
 venvPath = "."
 venv = ".venv"
