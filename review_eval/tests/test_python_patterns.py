@@ -14,6 +14,7 @@ from review_eval.models import GoldenTestCase
         ("yaml_unsafe_load.py", ["safe_load"]),
         ("missing_types.py", ["type"]),
         ("any_type_abuse.py", ["Any"]),
+        ("async_await_issues.py", ["await"]),
     ],
 )
 def test_python_antipatterns(

@@ -84,6 +84,22 @@ Be explicit: use words like "simpler", "over-engineer", "unnecessary", "YAGNI", 
     return ReviewEvaluator(prompt)
 
 
+@pytest.fixture
+def async_evaluator() -> ReviewEvaluator:
+    """Create evaluator with async/await-specific review context."""
+    prompt = """You are reviewing Python async/await code for the BinIt monorepo.
+Flag these async anti-patterns:
+- Missing await on coroutine calls (returns coroutine object instead of data)
+- Using time.sleep() in async functions (use asyncio.sleep instead)
+- Using requests library in async functions (use aiohttp instead)
+- Calling asyncio.run() inside async context (raises RuntimeError)
+- Fire-and-forget asyncio.create_task() without storing reference
+- Sync iteration over async iterators (use async for instead)
+
+Be explicit about what issues you find. Mention the specific anti-pattern names and suggest the correct async alternatives."""
+    return ReviewEvaluator(prompt)
+
+
 # Repo root for docs-aware tests (navigate up from tests dir)
 # tests -> review_eval -> python -> lib -> repo_root
 REPO_ROOT = Path(__file__).parent.parent.parent.parent.parent
