@@ -202,27 +202,53 @@ runs:
         if [ -z "${{ inputs.path_to_claude_code_executable }}" ]; then
           CLAUDE_CODE_VERSION="2.0.61"
           echo "Installing Claude Code v${CLAUDE_CODE_VERSION}..."
+
+          # Clean up any stale lock files before starting
+          rm -f ~/.claude/.install-lock 2>/dev/null || true
+
           for attempt in 1 2 3; do
             echo "Installation attempt $attempt..."
+
+            # Clean up lock file before each retry attempt
+            if [ $attempt -gt 1 ]; then
+              rm -f ~/.claude/.install-lock 2>/dev/null || true
+              echo "Waiting for any previous installation to complete..."
+              sleep 15
+            fi
+
             if command -v timeout &> /dev/null; then
-              timeout 120 bash -c "curl -fsSL https://claude.ai/install.sh | bash -s -- $CLAUDE_CODE_VERSION" && break
+              timeout 300 bash -c "curl -fsSL https://claude.ai/install.sh | bash -s -- $CLAUDE_CODE_VERSION" && break
             else
               curl -fsSL https://claude.ai/install.sh | bash -s -- "$CLAUDE_CODE_VERSION" && break
             fi
+
             if [ $attempt -eq 3 ]; then
               echo "Failed to install Claude Code after 3 attempts"
               exit 1
             fi
             echo "Installation failed, retrying..."
-            sleep 5
           done
-          echo "Claude Code installed successfully"
+
+          # Verify installation succeeded
+          if [ -f "$HOME/.local/bin/claude" ]; then
+            echo "✓ Claude Code installed successfully at $HOME/.local/bin/claude"
+          else
+            echo "ERROR: Claude Code installation reported success but executable not found at $HOME/.local/bin/claude"
+            ls -la "$HOME/.local/bin/" || echo "Directory $HOME/.local/bin/ does not exist"
+            exit 1
+          fi
+
+          # Add to PATH for subsequent steps
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+          # Also update PATH for current step
+          export PATH="$HOME/.local/bin:$PATH"
         else
           echo "Using custom Claude Code executable: ${{ inputs.path_to_claude_code_executable }}"
           # Add the directory containing the custom executable to PATH
           CLAUDE_DIR=$(dirname "${{ inputs.path_to_claude_code_executable }}")
           echo "$CLAUDE_DIR" >> "$GITHUB_PATH"
+          export PATH="$CLAUDE_DIR:$PATH"
         fi
 
     - name: Run Claude Code
