@@ -1,12 +1,29 @@
+# Devenv / Nix
+.devenv/
+.devenv.flake.nix
+devenv.lock
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-*.egg-info/
-dist/
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # Virtual environments
 .venv/
@@ -18,13 +35,18 @@ ENV/
 .env.local
 
 # IDE
-.vscode/
 .idea/
+.vscode/
+*.swp
+*.swo
+*~
 
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
+.tox/
+.nox/
 *.xml
 junit.xml
 
@@ -33,3 +55,10 @@ junit.xml
 
 # UV
 uv.lock
+
+# Documentation build
+site/
+
+# OS
+.DS_Store
+Thumbs.db

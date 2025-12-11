@@ -52,6 +52,22 @@ flowchart LR
 
 ## Quick Start
 
+### With devenv (recommended)
+
+```bash
+git clone https://github.com/georgepearse/open-reviewer.git
+cd open-reviewer
+
+# Install devenv: https://devenv.sh/getting-started/
+devenv shell
+dev-setup
+
+export OPENROUTER_API_KEY="your-key-here"
+test
+```
+
+### Manual Setup
+
 ```bash
 git clone https://github.com/georgepearse/open-reviewer.git
 cd open-reviewer/review_eval
