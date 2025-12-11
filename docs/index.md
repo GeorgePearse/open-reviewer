@@ -107,6 +107,14 @@ print(f"Any model found:        {result.any_model_issues}")
 
     [:octicons-arrow-right-24: Get started](tutorials/index.md)
 
+-   :material-account:{ .lg .middle } **User Guides**
+
+    ---
+
+    Comprehensive guides for using Open Reviewer features
+
+    [:octicons-arrow-right-24: User guides](guide/index.md)
+
 -   :material-book-open-variant:{ .lg .middle } **How-To Guides**
 
     ---
