@@ -1,6 +1,6 @@
 # Test Categories
 
-Open Reviewer includes 15+ pre-built test cases across four categories.
+Open Reviewer includes 16+ pre-built test cases across four categories.
 
 ## Python Anti-Patterns
 
@@ -83,6 +83,125 @@ def calculate_tax(): ...
 ```
 
 **Expected issues:** `utils`, `cohesion`, `single responsibility`
+
+### Async/Await Anti-Patterns
+
+Common mistakes in asynchronous Python code.
+
+#### Missing await on coroutine calls
+
+```python
+# Bad
+async def fetch_data():
+    return {"data": "example"}
+
+async def process():
+    result = fetch_data()  # Returns coroutine object, not data
+    return result
+
+# Good
+async def process():
+    result = await fetch_data()  # Actually gets the data
+    return result
+```
+
+**Expected issues:** `await`, `coroutine`, `async`
+
+#### Blocking calls in async functions
+
+```python
+# Bad
+import time
+import requests
+
+async def slow_task():
+    time.sleep(2)  # Blocks event loop
+    response = requests.get(url)  # Blocks event loop
+    return response.json()
+
+# Good
+import asyncio
+import aiohttp
+
+async def slow_task():
+    await asyncio.sleep(2)  # Non-blocking
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.json()
+```
+
+**Expected issues:** `time.sleep`, `asyncio.sleep`, `requests`, `aiohttp`, `blocking`
+
+#### asyncio.run() in async context
+
+```python
+# Bad
+async def nested_run():
+    async def inner():
+        return "result"
+
+    # RuntimeError: asyncio.run() cannot be called from running event loop
+    result = asyncio.run(inner())
+    return result
+
+# Good
+async def nested_run():
+    async def inner():
+        return "result"
+
+    result = await inner()
+    return result
+```
+
+**Expected issues:** `asyncio.run`, `event loop`, `RuntimeError`
+
+#### Fire-and-forget tasks without references
+
+```python
+# Bad
+async def create_tasks():
+    for i in range(5):
+        asyncio.create_task(some_task())  # No reference - may be garbage collected
+
+# Good
+async def create_tasks():
+    tasks = []
+    for i in range(5):
+        task = asyncio.create_task(some_task())
+        tasks.append(task)
+
+    await asyncio.gather(*tasks)
+```
+
+**Expected issues:** `create_task`, `reference`, `garbage collected`
+
+#### Sync iteration over async iterators
+
+```python
+# Bad
+async def process_items():
+    async def async_gen():
+        for i in range(3):
+            await asyncio.sleep(0.1)
+            yield f"item_{i}"
+
+    items = []
+    for item in async_gen():  # Wrong - need async for
+        items.append(item)
+
+# Good
+async def process_items():
+    async def async_gen():
+        for i in range(3):
+            await asyncio.sleep(0.1)
+            yield f"item_{i}"
+
+    items = []
+    async for item in async_gen():  # Correct async iteration
+        items.append(item)
+```
+
+**Expected issues:** `async for`, `async generator`, `iteration`
 
 ---
 
@@ -286,7 +405,7 @@ See [How-To: Add Test Cases](../how-to/add-test-cases.md) for details.
 
 | Category | Test Count | Focus |
 |----------|-----------|-------|
-| Python | 5 | Types, libraries, structure |
+| Python | 6 | Types, libraries, structure, async/await |
 | TypeScript | 4 | Types, patterns, exports |
 | SQL | 3 | Naming, performance, PostgreSQL |
 | Security | 3 | Injection, secrets, commands |
