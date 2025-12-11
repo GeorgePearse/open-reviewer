@@ -23,6 +23,7 @@ from review_eval.multi_model_evaluator import (
     print_multi_model_report,
 )
 from review_eval.semantic_evaluator import SemanticEvaluator, create_semantic_evaluator
+from review_eval.health_check import get_health_status, HealthCheckResult
 
 __all__ = [
     "BENCHMARK_MODELS",
@@ -30,6 +31,7 @@ __all__ = [
     "DocsAwareEvaluator",
     "DocumentationFile",
     "GoldenTestCase",
+    "HealthCheckResult",
     "ModelConfig",
     "ModelReviewResult",
     "MultiModelEvaluator",
@@ -41,6 +43,7 @@ __all__ = [
     "create_semantic_evaluator",
     "discover_docs",
     "get_doc_coverage_report",
+    "get_health_status",
     "print_multi_model_report",
     "select_docs_for_path",
 ]

@@ -14,6 +14,7 @@ from review_eval.collectors import (
 )
 from review_eval.models import ScoringConfig
 from review_eval.scoring_engine import ScoringEngine
+from review_eval.health_check import get_health_status
 
 
 async def score_command(args: argparse.Namespace) -> int:
@@ -133,6 +134,53 @@ async def score_command(args: argparse.Namespace) -> int:
     return 0
 
 
+async def health_command(args: argparse.Namespace) -> int:
+    """Run health check command.
+
+    Args:
+        args: Parsed command line arguments.
+
+    Returns:
+        Exit code (0 for healthy, 1 for unhealthy).
+    """
+    try:
+        health_status = await get_health_status()
+
+        if args.format == "json":
+            print(json.dumps(health_status, indent=2))
+        else:
+            # Human-readable format
+            status_icon = "✓" if health_status["status"] == "healthy" else "✗"
+            print(f"\n{status_icon} Service: {health_status['service']} v{health_status['version']}")
+            print(f"Status: {health_status['status'].upper()}")
+            print(f"Timestamp: {health_status['timestamp']}")
+
+            if health_status.get("errors"):
+                print(f"\n❌ Errors:")
+                for error in health_status["errors"]:
+                    print(f"  - {error}")
+
+            if health_status.get("warnings"):
+                print(f"\n⚠️  Warnings:")
+                for warning in health_status["warnings"]:
+                    print(f"  - {warning}")
+
+            print(f"\nChecks:")
+            for check_name, check_data in health_status["checks"].items():
+                check_icon = "✓" if check_data["healthy"] else "✗"
+                print(f"  {check_icon} {check_data['name']}")
+
+        # Exit with non-zero code if unhealthy
+        if health_status["status"] == "unhealthy":
+            return 1
+
+        return 0
+
+    except Exception as e:
+        print(f"Error running health check: {str(e)}", file=sys.stderr)
+        return 1
+
+
 def main() -> int:
     """Main entry point for CLI."""
     parser = argparse.ArgumentParser(
@@ -189,6 +237,15 @@ Examples:
         help="Exit with code 1 if score is below threshold",
     )
 
+    # Health command
+    health_parser = subparsers.add_parser("health", help="Check system health and connectivity")
+    health_parser.add_argument(
+        "--format",
+        choices=["human", "json"],
+        default="human",
+        help="Output format (default: human)"
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -197,6 +254,8 @@ Examples:
 
     if args.command == "score":
         return asyncio.run(score_command(args))
+    elif args.command == "health":
+        return asyncio.run(health_command(args))
 
     return 0
 
