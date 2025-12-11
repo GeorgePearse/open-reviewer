@@ -168,6 +168,11 @@ jobs:
           npm install -g @anthropic/pal-mcp-server
           echo "PAL MCP Server installed for multi-model consensus"
 
+      - name: Setup Morph LLM MCP Server
+        run: |
+          npm install -g @morphllm/morphmcp
+          echo "Morph LLM MCP Server installed for fast file editing"
+
       - uses: actions/download-artifact@v4
         with:
           name: chunks-data
@@ -187,6 +192,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          MORPH_API_KEY: ${{ secrets.MORPH_API_KEY }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-opus-4-20250514"
@@ -194,7 +200,8 @@ jobs:
           prompt_file: review_prompt.txt
           claude_args: |
             --verbose
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__pal__codereview,mcp__pal__consensus,Bash(gh pr comment:*),Read,Glob,Grep"
+            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}}}}'
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__pal__codereview,mcp__pal__consensus,mcp__filesystem-with-morph__edit_file,mcp__filesystem-with-morph__warpgrep_codebase_search,Bash(gh pr comment:*),Read,Glob"
             --append-system-prompt "ultrathink"
 
   # Stage 3: Security review (runs in parallel with Stage 1, independent of chunks)
@@ -212,6 +219,8 @@ jobs:
 
       - name: Security-Focused Review
         uses: ./.github/actions/claude-code-action
+        env:
+          MORPH_API_KEY: ${{ secrets.MORPH_API_KEY }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-opus-4-20250514"
@@ -253,7 +262,8 @@ jobs:
 
           claude_args: |
             --verbose
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Read,Glob,Grep"
+            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}}}}'
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__filesystem-with-morph__edit_file,mcp__filesystem-with-morph__warpgrep_codebase_search,Bash(gh pr comment:*),Read,Glob"
             --append-system-prompt "ultrathink"
 
   # ============================================================
@@ -273,8 +283,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup PAL MCP Server
+        run: |
+          npm install -g @anthropic/pal-mcp-server
+          echo "PAL MCP Server installed for comment handling"
+
       - name: Handle @claude request
         uses: ./.github/actions/claude-code-action
+        env:
+          MORPH_API_KEY: ${{ secrets.MORPH_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-opus-4-20250514"
@@ -282,7 +306,8 @@ jobs:
           track_progress: true
           claude_args: |
             --verbose
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh issue comment:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
+            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}}}}'
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__pal__debug,mcp__pal__thinkdeep,mcp__pal__planner,mcp__pal__chat,mcp__pal__apilookup,mcp__filesystem-with-morph__edit_file,mcp__filesystem-with-morph__warpgrep_codebase_search,Bash(gh pr comment:*),Bash(gh issue comment:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
             --append-system-prompt "ultrathink"
 
   # ============================================================
@@ -306,8 +331,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup PAL MCP Server
+        run: |
+          npm install -g @anthropic/pal-mcp-server
+          echo "PAL MCP Server installed for issue handling"
+
       - name: Work on issue
         uses: ./.github/actions/claude-code-action
+        env:
+          MORPH_API_KEY: ${{ secrets.MORPH_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-opus-4-20250514"
@@ -315,14 +354,18 @@ jobs:
           track_progress: true
           show_full_output: true
           prompt: |
-            Work on this GitHub issue. After completing the implementation:
+            Work on this GitHub issue. Follow this workflow:
 
-            1. Commit your changes to a new branch
-            2. Push the branch to origin
-            3. Create a pull request using: gh pr create --title "<descriptive title>" --body "<summary of changes, closes #ISSUE_NUMBER>"
+            1. Use mcp__pal__planner to break down the issue into steps
+            2. Implement the solution incrementally
+            3. Before committing, use mcp__pal__precommit to validate changes
+            4. Commit your changes to a new branch
+            5. Push the branch to origin
+            6. Create a pull request using: gh pr create --title "<descriptive title>" --body "<summary of changes, closes #ISSUE_NUMBER>"
 
             Always create the actual PR - do not just provide a link.
           claude_args: |
             --verbose
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr:*),Bash(gh issue:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
+            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}}}}'
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__pal__planner,mcp__pal__debug,mcp__pal__thinkdeep,mcp__pal__precommit,mcp__pal__apilookup,mcp__filesystem-with-morph__edit_file,mcp__filesystem-with-morph__warpgrep_codebase_search,Bash(gh pr:*),Bash(gh issue:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
             --append-system-prompt "ultrathink"

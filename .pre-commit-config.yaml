@@ -16,7 +16,8 @@ repos:
         name: ruff (formatter)
         files: ^(review_eval/.*\.py|\.github/scripts/.*\.py)$
 
-  # Python type checking with pyright
+  # Python type checking with pyright (manual stage only - expensive)
+  # Run with: pre-commit run pyright --all-files
   - repo: https://github.com/RobertCraigie/pyright-python
     rev: v1.1.390
     hooks:
@@ -25,6 +26,7 @@ repos:
         files: ^(review_eval/.*\.py|\.github/scripts/.*\.py)$
         # Exclude test fixtures as they contain intentionally problematic code
         exclude: ^review_eval/review_eval/fixtures/
+        stages: [manual]
 
   # TypeScript/JavaScript formatting (for GitHub Actions code)
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -40,12 +42,29 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^\.github/actions/.*/node_modules/
+        exclude: ^(\.github/actions/.*/node_modules/|review_eval/fixtures/)
       - id: end-of-file-fixer
-        exclude: ^\.github/actions/.*/node_modules/
+        exclude: ^(\.github/actions/.*/node_modules/|review_eval/fixtures/)
       - id: check-yaml
         exclude: ^\.github/actions/.*/node_modules/
       - id: check-json
         exclude: ^\.github/actions/.*/node_modules/
       - id: check-toml
       - id: check-merge-conflict
+      - id: check-added-large-files
+        name: Check for large files
+        args: [--maxkb=1000]
+        exclude: ^\.github/actions/.*/node_modules/
+      - id: mixed-line-ending
+        name: Check line endings
+        args: [--fix=lf]
+        exclude: ^\.github/actions/.*/node_modules/
+
+  # Detect secrets (optional but recommended for security)
+  # To create baseline: pre-commit run detect-secrets --all-files > .secrets.baseline
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: Detect secrets in code
+        exclude: ^(review_eval/fixtures/|\.github/actions/.*/node_modules/)

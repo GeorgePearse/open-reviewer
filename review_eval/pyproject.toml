@@ -47,6 +47,39 @@ module-root = ""
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+addopts = [
+    "-v",                       # Verbose output
+    "--strict-markers",         # Error on undefined markers
+    "--strict-config",          # Error on unknown config options
+    "--tb=short",               # Short traceback format
+    "-ra",                      # Show summary of all test outcomes
+]
+markers = [
+    "integration: Integration tests requiring external services (API, database, etc.)",
+    "slow: Tests that take longer than 1 second to run",
+    "security: Security-focused tests (OWASP, injection, etc.)",
+    "python: Tests for Python code analysis",
+    "typescript: Tests for TypeScript code analysis",
+    "sql: Tests for SQL code analysis",
+]
+
+[tool.coverage.run]
+source = ["review_eval"]
+omit = [
+    "tests/*",
+    "fixtures/*",
+    "*/__main__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
 
 [tool.ruff]
 line-length = 100
