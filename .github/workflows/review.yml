@@ -163,10 +163,13 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
       - name: Setup PAL MCP Server
         run: |
-          npm install -g @anthropic/pal-mcp-server
-          echo "PAL MCP Server installed for multi-model consensus"
+          echo "PAL MCP Server will be installed on-demand via uvx"
+          echo "uvx version: $(uvx --version)"
 
       - name: Setup Morph LLM MCP Server
         run: |
@@ -200,7 +203,7 @@ jobs:
           prompt_file: review_prompt.txt
           claude_args: |
             --verbose
-            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}}}}'
+            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}},"pal":{"command":"uvx","args":["--from","git+https://github.com/BeehiveInnovations/pal-mcp-server.git","pal-mcp-server"],"env":{"OPENAI_API_KEY":"'"$OPENAI_API_KEY"'","GEMINI_API_KEY":"'"$GEMINI_API_KEY"'","ANTHROPIC_API_KEY":"'"$ANTHROPIC_API_KEY"'"}}}}'
             --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__pal__codereview,mcp__pal__consensus,mcp__filesystem-with-morph__edit_file,mcp__filesystem-with-morph__warpgrep_codebase_search,Bash(gh pr comment:*),Read,Glob"
             --append-system-prompt "ultrathink"
 
@@ -287,10 +290,13 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
       - name: Setup PAL MCP Server
         run: |
-          npm install -g @anthropic/pal-mcp-server
-          echo "PAL MCP Server installed for comment handling"
+          echo "PAL MCP Server will be installed on-demand via uvx"
+          echo "uvx version: $(uvx --version)"
 
       - name: Handle @claude request
         uses: ./.github/actions/claude-code-action
@@ -306,7 +312,7 @@ jobs:
           track_progress: true
           claude_args: |
             --verbose
-            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}}}}'
+            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}},"pal":{"command":"uvx","args":["--from","git+https://github.com/BeehiveInnovations/pal-mcp-server.git","pal-mcp-server"],"env":{"OPENAI_API_KEY":"'"$OPENAI_API_KEY"'","GEMINI_API_KEY":"'"$GEMINI_API_KEY"'","ANTHROPIC_API_KEY":"'"$ANTHROPIC_API_KEY"'"}}}}'
             --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__pal__debug,mcp__pal__thinkdeep,mcp__pal__planner,mcp__pal__chat,mcp__pal__apilookup,mcp__filesystem-with-morph__edit_file,mcp__filesystem-with-morph__warpgrep_codebase_search,Bash(gh pr comment:*),Bash(gh issue comment:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
             --append-system-prompt "ultrathink"
 
@@ -335,10 +341,13 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
       - name: Setup PAL MCP Server
         run: |
-          npm install -g @anthropic/pal-mcp-server
-          echo "PAL MCP Server installed for issue handling"
+          echo "PAL MCP Server will be installed on-demand via uvx"
+          echo "uvx version: $(uvx --version)"
 
       - name: Work on issue
         uses: ./.github/actions/claude-code-action
@@ -366,6 +375,6 @@ jobs:
             Always create the actual PR - do not just provide a link.
           claude_args: |
             --verbose
-            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}}}}'
+            --mcp-config '{"mcpServers":{"filesystem-with-morph":{"command":"npx","args":["-y","@morphllm/morphmcp"],"env":{"MORPH_API_KEY":"'"$MORPH_API_KEY"'","ENABLED_TOOLS":"all","WORKSPACE_MODE":"true","DEBUG":"false"}},"pal":{"command":"uvx","args":["--from","git+https://github.com/BeehiveInnovations/pal-mcp-server.git","pal-mcp-server"],"env":{"OPENAI_API_KEY":"'"$OPENAI_API_KEY"'","GEMINI_API_KEY":"'"$GEMINI_API_KEY"'","ANTHROPIC_API_KEY":"'"$ANTHROPIC_API_KEY"'"}}}}'
             --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__pal__planner,mcp__pal__debug,mcp__pal__thinkdeep,mcp__pal__precommit,mcp__pal__apilookup,mcp__filesystem-with-morph__edit_file,mcp__filesystem-with-morph__warpgrep_codebase_search,Bash(gh pr:*),Bash(gh issue:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
             --append-system-prompt "ultrathink"
