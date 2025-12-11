@@ -2,7 +2,7 @@
 
 import asyncio
 from pathlib import Path
-from typing import Literal
+from typing import Any, Dict, List, Literal
 
 from review_eval.collectors.base import MetricCollector
 from review_eval.models import MetricCategory, PRScore, ScoringConfig, ScoringResult
@@ -19,7 +19,7 @@ class ScoringEngine:
         collectors: List of metric collectors to run.
     """
 
-    def __init__(self, config: ScoringConfig, collectors: list[MetricCollector]):
+    def __init__(self, config: ScoringConfig, collectors: List[MetricCollector]) -> None:
         """Initialize the scoring engine.
 
         Args:
@@ -45,7 +45,7 @@ class ScoringEngine:
         results = await asyncio.gather(*[collector.collect() for collector in self.collectors])
 
         # Build breakdown dict
-        breakdown: dict[MetricCategory, ScoringResult] = {}
+        breakdown: Dict[MetricCategory, ScoringResult] = {}
         for result in results:
             breakdown[result.category] = result
 
@@ -56,7 +56,7 @@ class ScoringEngine:
             weighted_score += result.normalized_score * weight
 
         # Apply critical penalties
-        blocking_factors: list[str] = []
+        blocking_factors: List[str] = []
         penalties = 0.0
 
         # Check for critical issues in breakdown
@@ -104,7 +104,7 @@ class ScoringEngine:
 
     @classmethod
     def from_config_file(
-        cls, config_path: Path, collectors: list[MetricCollector]
+        cls, config_path: Path, collectors: List[MetricCollector]
     ) -> "ScoringEngine":
         """Create a ScoringEngine from a YAML config file.
 
@@ -118,9 +118,9 @@ class ScoringEngine:
         import yaml
 
         with open(config_path) as f:
-            data = yaml.safe_load(f)
+            data: Dict[str, Any] = yaml.safe_load(f)
 
-        scoring_data = data.get("scoring", {})
+        scoring_data: Dict[str, Any] = data.get("scoring", {})
 
         # Parse config
         config = ScoringConfig(
