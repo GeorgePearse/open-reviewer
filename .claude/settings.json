@@ -1,0 +1,5 @@
+{
+  "hooks": {
+    "pre-completion": ".claude/hooks/pre-completion.sh"
+  }
+}

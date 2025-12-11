@@ -10,11 +10,11 @@ from pathlib import Path
 
 # Import tree-sitter related modules
 try:
-    from tree_sitter import Parser, Language, Query, QueryCursor
-    import tree_sitter_typescript
-    import tree_sitter_rust
     import tree_sitter_go
     import tree_sitter_java
+    import tree_sitter_rust
+    import tree_sitter_typescript
+    from tree_sitter import Language, Parser, Query, QueryCursor
 
     TREE_SITTER_AVAILABLE = True
 except ImportError:

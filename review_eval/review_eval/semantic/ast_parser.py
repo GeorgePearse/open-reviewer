@@ -218,51 +218,49 @@ def _get_name(node: ast.expr) -> str:
     """Get the name from an AST node (handles Name, Attribute, Call)."""
     if isinstance(node, ast.Name):
         return node.id
-    elif isinstance(node, ast.Attribute):
+    if isinstance(node, ast.Attribute):
         return f"{_get_name(node.value)}.{node.attr}"
-    elif isinstance(node, ast.Call):
+    if isinstance(node, ast.Call):
         return _get_name(node.func)
-    elif isinstance(node, ast.Subscript):
+    if isinstance(node, ast.Subscript):
         return f"{_get_name(node.value)}[...]"
-    elif isinstance(node, ast.Constant):
+    if isinstance(node, ast.Constant):
         return repr(node.value)
-    else:
-        return "<complex>"
+    return "<complex>"
 
 
 def _get_annotation(node: ast.expr) -> str:
     """Get type annotation as a string."""
     if isinstance(node, ast.Name):
         return node.id
-    elif isinstance(node, ast.Attribute):
+    if isinstance(node, ast.Attribute):
         return _get_name(node)
-    elif isinstance(node, ast.Subscript):
+    if isinstance(node, ast.Subscript):
         base = _get_name(node.value)
         if isinstance(node.slice, ast.Tuple):
             args = ", ".join(_get_annotation(elt) for elt in node.slice.elts)
         else:
             args = _get_annotation(node.slice)
         return f"{base}[{args}]"
-    elif isinstance(node, ast.Constant):
+    if isinstance(node, ast.Constant):
         if node.value is None:
             return "None"
         return repr(node.value)
-    elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
         # Union type: X | Y
         left = _get_annotation(node.left)
         right = _get_annotation(node.right)
         return f"{left} | {right}"
-    elif isinstance(node, ast.Tuple):
+    if isinstance(node, ast.Tuple):
         return ", ".join(_get_annotation(elt) for elt in node.elts)
-    else:
-        return "<complex>"
+    return "<complex>"
 
 
 def _get_call_name(node: ast.Call) -> str | None:
     """Get the name of a function/method being called."""
     if isinstance(node.func, ast.Name):
         return node.func.id
-    elif isinstance(node.func, ast.Attribute):
+    if isinstance(node.func, ast.Attribute):
         # For method calls like obj.method(), just return method name
         return node.func.attr
     return None

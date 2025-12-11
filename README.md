@@ -11,6 +11,7 @@ Designed to work alongside Claude Code and other AI code reviewers, Open Reviewe
 ## Features
 
 - **Multi-Model Consensus** - Query multiple LLMs and aggregate findings (unanimous, majority, any)
+- **PR Quality Gate** - Automated scoring (0-100) with multi-metric analysis (tests, coverage, static analysis)
 - **Golden Test Suite** - 15+ pre-built test cases covering common anti-patterns
 - **Language Support** - Python, TypeScript, SQL, and security-focused tests
 - **Semantic Evaluation** - Embedding-based similarity, AST parsing, repository maps
@@ -167,7 +168,30 @@ Open Reviewer includes a GitHub Actions workflow for automated PR reviews:
 # - Posts inline comments on PRs
 ```
 
-See [docs/guide/overview.md](docs/guide/overview.md) for configuration details.
+See the [GitHub Actions Integration tutorial](https://georgepearse.github.io/open-reviewer/tutorials/github-actions-integration/) for configuration details.
+
+## PR Quality Gate
+
+Automatically score pull requests (0-100) based on multiple quality metrics:
+
+- **Tests** (40%): Test pass rate from pytest
+- **Coverage** (30%): Code coverage delta vs baseline
+- **Static Analysis** (30%): Ruff linting + Pyright type checking
+
+```bash
+# Run locally
+cd review_eval
+uv run pytest --junitxml=junit.xml --cov --cov-report=xml
+uv run python -m review_eval score \
+  --config ../.github/reviewer-gate.yaml \
+  --junit junit.xml \
+  --coverage coverage.xml \
+  --baseline-coverage 85.0
+```
+
+The workflow automatically comments on PRs with score breakdowns and blocks merges below the threshold.
+
+See the [PR Quality Gate guide](https://georgepearse.github.io/open-reviewer/how-to/pr-quality-gate/) for setup instructions.
 
 ## Adding Custom Tests
 
@@ -186,13 +210,12 @@ assert result.passed
 
 ## Documentation
 
-Full documentation is available in the `docs/` directory:
+Full documentation is available at [georgepearse.github.io/open-reviewer](https://georgepearse.github.io/open-reviewer/):
 
-- [Installation](docs/getting-started/installation.md)
-- [Quick Start](docs/getting-started/quickstart.md)
-- [Architecture Overview](docs/guide/overview.md)
-- [Evaluators Guide](docs/guide/evaluators.md)
-- [API Reference](docs/api/)
+- [Tutorials](https://georgepearse.github.io/open-reviewer/tutorials/) - Step-by-step learning guides
+- [How-To Guides](https://georgepearse.github.io/open-reviewer/how-to/) - Task-oriented guides
+- [Reference](https://georgepearse.github.io/open-reviewer/reference/) - API and CLI documentation
+- [Explanation](https://georgepearse.github.io/open-reviewer/explanation/) - Architecture and concepts
 
 ## Requirements
 
@@ -203,4 +226,4 @@ Full documentation is available in the `docs/` directory:
 
 ## Contributing
 
-Contributions are welcome. See [docs/contributing.md](docs/contributing.md) for guidelines.
+Contributions are welcome. See [Contributing](https://georgepearse.github.io/open-reviewer/contributing/) for guidelines.

@@ -120,8 +120,14 @@ class MultiModelEvaluator:
             review_text, latency_ms = await self._query_model(model, test_case.code)
             review_text_lower = review_text.lower()
 
-            matched = [issue for issue in test_case.expected_issues if issue.lower() in review_text_lower]
-            missed = [issue for issue in test_case.expected_issues if issue.lower() not in review_text_lower]
+            matched = [
+                issue for issue in test_case.expected_issues if issue.lower() in review_text_lower
+            ]
+            missed = [
+                issue
+                for issue in test_case.expected_issues
+                if issue.lower() not in review_text_lower
+            ]
 
             return ModelReviewResult(
                 model_name=model.name,
@@ -166,7 +172,9 @@ class MultiModelEvaluator:
         majority_threshold = total_models // 2 + 1
 
         # Consensus: found by majority of models
-        consensus_issues = [issue for issue, count in issue_counts.items() if count >= majority_threshold]
+        consensus_issues = [
+            issue for issue, count in issue_counts.items() if count >= majority_threshold
+        ]
 
         # Unanimous: found by ALL models
         unanimous_issues = [issue for issue, count in issue_counts.items() if count == total_models]

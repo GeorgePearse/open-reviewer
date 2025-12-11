@@ -203,7 +203,10 @@ class MockEmbeddingClient(EmbeddingClient):
 
             text_hash = hashlib.sha256(text.encode()).digest()
             # Create a normalized vector from the hash
-            embedding = [(byte / 255.0 - 0.5) * 2 for byte in (text_hash * (self.dimension // 32 + 1))[: self.dimension]]
+            embedding = [
+                (byte / 255.0 - 0.5) * 2
+                for byte in (text_hash * (self.dimension // 32 + 1))[: self.dimension]
+            ]
             # Normalize to unit length
             norm = sum(x * x for x in embedding) ** 0.5
             embedding = [x / norm for x in embedding]

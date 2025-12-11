@@ -1,0 +1,29 @@
+# PR Scoring Configuration for GitHub Actions
+# Simplified config without AI review (for now)
+
+scoring:
+  # Minimum score required to pass (0-100)
+  threshold: 75
+
+  # Weight for each metric category (must sum to 1.0)
+  # AI review excluded until integration is complete
+  weights:
+    tests: 0.40           # Test pass rate (increased weight)
+    coverage: 0.30        # Code coverage delta (increased weight)
+    static_analysis: 0.30 # Ruff + Pyright errors (increased weight)
+    ai_review: 0.00       # Not integrated yet
+
+  # Critical penalties (point deductions)
+  critical_penalties:
+    security_vulnerability: 100  # Immediate fail
+    critical_test_failure: 50    # All tests failing
+
+  # Tolerance thresholds for noisy metrics
+  tolerance:
+    coverage_delta: 0.1  # Ignore coverage changes < 0.1%
+
+  # Normalization settings
+  normalization:
+    static_analysis:
+      max_errors_for_80: 5           # 1-5 errors = 80 points
+      error_density_per_100_loc: true  # Calculate per 100 lines

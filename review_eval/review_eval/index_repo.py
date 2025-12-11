@@ -77,7 +77,9 @@ async def index_repository(repo_root: Path, force: bool = False, max_chunks: int
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Index a repository into Qdrant for semantic code search")
+    parser = argparse.ArgumentParser(
+        description="Index a repository into Qdrant for semantic code search"
+    )
     parser.add_argument(
         "repo_path",
         type=Path,

@@ -56,8 +56,12 @@ class ReviewEvaluator:
         review_text = response.content[0].text if response.content else ""
         review_text_lower = review_text.lower()
 
-        matched = [issue for issue in test_case.expected_issues if issue.lower() in review_text_lower]
-        missed = [issue for issue in test_case.expected_issues if issue.lower() not in review_text_lower]
+        matched = [
+            issue for issue in test_case.expected_issues if issue.lower() in review_text_lower
+        ]
+        missed = [
+            issue for issue in test_case.expected_issues if issue.lower() not in review_text_lower
+        ]
 
         return ReviewResult(
             test_id=test_case.id,

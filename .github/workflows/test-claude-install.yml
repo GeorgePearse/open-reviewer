@@ -1,0 +1,49 @@
+name: Test Claude CLI Installation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/actions/claude-code-action/**'
+  pull_request:
+    paths:
+      - '.github/actions/claude-code-action/**'
+  workflow_dispatch:
+
+jobs:
+  test-install:
+    name: Verify Claude CLI Installation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify fresh environment
+        run: |
+          if command -v claude &> /dev/null; then
+            echo "ERROR: claude already exists"
+            exit 1
+          fi
+          echo "OK: Fresh environment confirmed"
+
+      - name: Install Claude CLI
+        run: |
+          CLAUDE_CODE_VERSION="2.0.61"
+          curl -fsSL https://claude.ai/install.sh | bash -s -- "$CLAUDE_CODE_VERSION"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Verify binary exists
+        run: |
+          if [ ! -f "$HOME/.local/bin/claude" ]; then
+            echo "FAIL: Binary not found"
+            exit 1
+          fi
+          echo "PASS: Binary exists"
+
+      - name: Verify PATH updated (subsequent step)
+        run: |
+          if ! command -v claude &> /dev/null; then
+            echo "FAIL: claude not in PATH"
+            exit 1
+          fi
+          claude --version
+          echo "PASS: claude available in PATH"

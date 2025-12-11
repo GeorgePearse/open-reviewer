@@ -1,5 +1,9 @@
 """Pydantic models for review evaluation."""
 
+from datetime import UTC, datetime
+from enum import StrEnum
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -85,7 +89,9 @@ class GoldenTestCase(BaseModel):
     id: str
     file_path: str
     code: str
-    expected_issues: list[str] = Field(description="Keywords that MUST appear in review (e.g., 'psycopg2', 'type annotation')")
+    expected_issues: list[str] = Field(
+        description="Keywords that MUST appear in review (e.g., 'psycopg2', 'type annotation')"
+    )
     severity: str = "high"
     category: str
 
@@ -106,3 +112,94 @@ class ReviewResult(BaseModel):
     review_text: str
     matched_issues: list[str]
     missed_issues: list[str]
+
+
+# ============================================================================
+# PR Scoring Models
+# ============================================================================
+
+
+class MetricCategory(StrEnum):
+    """Categories of metrics for PR scoring."""
+
+    TESTS = "tests"
+    COVERAGE = "coverage"
+    STATIC_ANALYSIS = "static_analysis"
+    AI_REVIEW = "ai_review"
+
+
+class ScoringResult(BaseModel):
+    """Result from a single metric collector.
+
+    Attributes:
+        category: The metric category this result represents.
+        raw_value: The raw metric value before normalization.
+        normalized_score: Score normalized to 0-100 scale.
+        weight: Weight applied to this metric in final score.
+        details: Additional details about the metric collection.
+        error_message: Error message if metric collection failed.
+    """
+
+    category: MetricCategory
+    raw_value: float
+    normalized_score: float  # 0-100
+    weight: float
+    details: dict[str, Any]
+    error_message: str | None = None
+
+
+class PRScore(BaseModel):
+    """Final PR score with breakdown.
+
+    Attributes:
+        total_score: Final aggregated score (0-100).
+        status: Whether the PR passed the quality gate.
+        threshold: Minimum score required to pass.
+        blocking_factors: List of critical issues that caused failure.
+        breakdown: Individual metric scores by category.
+        timestamp: When the score was calculated.
+    """
+
+    total_score: float  # 0-100
+    status: Literal["PASS", "FAIL"]
+    threshold: float
+    blocking_factors: list[str]
+    breakdown: dict[MetricCategory, ScoringResult]
+    timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+
+
+class ScoringConfig(BaseModel):
+    """Configuration for PR scoring.
+
+    Attributes:
+        threshold: Minimum score required to pass (0-100).
+        weights: Weight for each metric category (must sum to 1.0).
+        critical_penalties: Point deductions for critical issues.
+        tolerance: Tolerance thresholds for noisy metrics.
+    """
+
+    threshold: float = 80.0  # Minimum passing score
+    weights: dict[MetricCategory, float] = Field(
+        default_factory=lambda: {
+            MetricCategory.TESTS: 0.30,
+            MetricCategory.COVERAGE: 0.20,
+            MetricCategory.STATIC_ANALYSIS: 0.20,
+            MetricCategory.AI_REVIEW: 0.30,
+        }
+    )
+    critical_penalties: dict[str, float] = Field(
+        default_factory=lambda: {
+            "security_vulnerability": 100.0,  # Immediate fail
+            "critical_test_failure": 50.0,
+        }
+    )
+    tolerance: dict[str, float] = Field(
+        default_factory=lambda: {
+            "coverage_delta": 0.1,  # Ignore drops < 0.1%
+        }
+    )
+
+    def validate_weights(self) -> bool:
+        """Validate that weights sum to approximately 1.0."""
+        total = sum(self.weights.values())
+        return abs(total - 1.0) < 0.01  # Allow small floating point error

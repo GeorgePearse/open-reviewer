@@ -224,7 +224,9 @@ def check_env_vars() -> list[str]:
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Incrementally update embeddings for changed Python files")
+    parser = argparse.ArgumentParser(
+        description="Incrementally update embeddings for changed Python files"
+    )
     parser.add_argument(
         "--repo-root",
         type=Path,
@@ -297,7 +299,9 @@ def main() -> int:
         print("No Python files changed, nothing to update.")
         return 0
 
-    print(f"Found {len(changed_files)} modified/added and {len(deleted_files)} deleted Python files")
+    print(
+        f"Found {len(changed_files)} modified/added and {len(deleted_files)} deleted Python files"
+    )
 
     if args.dry_run:
         print("\nDry run - would update:")

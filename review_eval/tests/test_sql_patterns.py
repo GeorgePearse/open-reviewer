@@ -2,6 +2,7 @@
 
 import pytest
 from conftest import load_fixture
+
 from review_eval.evaluator import ReviewEvaluator
 from review_eval.models import GoldenTestCase
 
@@ -31,7 +32,9 @@ def test_sql_antipatterns(
 
     result = sql_evaluator.evaluate(test_case)
 
-    assert result.passed, f"Failed to catch issues in {fixture_file}. Matched: {result.matched_issues}, Missed: {result.missed_issues}"
+    assert result.passed, (
+        f"Failed to catch issues in {fixture_file}. Matched: {result.matched_issues}, Missed: {result.missed_issues}"
+    )
 
 
 def test_catches_boolean_naming(sql_evaluator: ReviewEvaluator) -> None:
@@ -68,4 +71,6 @@ def test_catches_timestamp_without_timezone(sql_evaluator: ReviewEvaluator) -> N
 
     review_lower = result.review_text.lower()
     found_timezone = "time zone" in review_lower or "timezone" in review_lower
-    assert found_timezone, f"Failed to flag TIMESTAMP without TIME ZONE. Response: {result.review_text[:500]}"
+    assert found_timezone, (
+        f"Failed to flag TIMESTAMP without TIME ZONE. Response: {result.review_text[:500]}"
+    )

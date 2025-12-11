@@ -1,0 +1,104 @@
+site_name: Open Reviewer
+site_url: https://georgepearse.github.io/open-reviewer/
+site_description: Multi-model consensus for AI code review verification
+site_author: George Pearse
+
+repo_name: GeorgePearse/open-reviewer
+repo_url: https://github.com/GeorgePearse/open-reviewer
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Tutorials:
+    - tutorials/index.md
+    - Your First Evaluation: tutorials/first-evaluation.md
+    - Multi-Model Consensus: tutorials/multi-model-consensus.md
+    - GitHub Actions Integration: tutorials/github-actions-integration.md
+  - How-To Guides:
+    - how-to/index.md
+    - PR Quality Gate: how-to/pr-quality-gate.md
+    - Configure Models: how-to/configure-models.md
+    - Add Test Cases: how-to/add-test-cases.md
+    - Setup Semantic Search: how-to/setup-semantic-search.md
+    - Index Repository: how-to/index-repository.md
+    - Deploy GitHub Actions: how-to/deploy-github-actions.md
+  - Reference:
+    - reference/index.md
+    - API:
+      - reference/api/index.md
+      - Evaluators: reference/api/evaluators.md
+      - Data Models: reference/api/models.md
+      - Semantic Analysis: reference/api/semantic.md
+      - Embeddings: reference/api/embeddings.md
+    - CLI Tools: reference/cli.md
+    - Model Tiers: reference/model-tiers.md
+    - Test Categories: reference/test-categories.md
+  - Explanation:
+    - explanation/index.md
+    - Architecture: explanation/architecture.md
+    - PR Quality Scoring: explanation/pr-quality-scoring.md
+    - Multi-Model Consensus: explanation/multi-model-consensus.md
+    - Semantic Context: explanation/semantic-context.md
+    - Token Budgets: explanation/token-budgets.md
+  - Contributing: contributing.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/GeorgePearse/open-reviewer
+
+copyright: Copyright &copy; 2024 George Pearse
