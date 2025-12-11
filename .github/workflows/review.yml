@@ -189,11 +189,12 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: "claude-sonnet-4-20250514"
+          model: "claude-opus-4-20250514"
           track_progress: true
           prompt_file: review_prompt.txt
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__pal__codereview,mcp__pal__consensus,Bash(gh pr comment:*),Read,Glob,Grep"
+            --append-system-prompt "ultrathink"
 
   # Stage 3: Security review (runs in parallel with Stage 1, independent of chunks)
   review-security:
@@ -212,7 +213,7 @@ jobs:
         uses: ./.github/actions/claude-code-action
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: "claude-sonnet-4-20250514"
+          model: "claude-opus-4-20250514"
           track_progress: true
           prompt: |
             Perform a security-focused review of ALL changes in this PR.
@@ -251,6 +252,7 @@ jobs:
 
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Read,Glob,Grep"
+            --append-system-prompt "ultrathink"
 
   # ============================================================
   # COMMENT-TRIGGERED TASKS (@claude mentions)
@@ -273,11 +275,12 @@ jobs:
         uses: ./.github/actions/claude-code-action
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: "claude-sonnet-4-20250514"
+          model: "claude-opus-4-20250514"
           trigger_phrase: "@claude"
           track_progress: true
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh issue comment:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
+            --append-system-prompt "ultrathink"
 
   # ============================================================
   # ISSUE-TRIGGERED TASKS (claude label or assignment)
@@ -304,9 +307,10 @@ jobs:
         uses: ./.github/actions/claude-code-action
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: "claude-sonnet-4-20250514"
+          model: "claude-opus-4-20250514"
           label_trigger: "claude"
           track_progress: true
           show_full_output: true
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr:*),Bash(gh issue:*),Bash(git:*),Read,Glob,Grep,Write,Edit"
+            --append-system-prompt "ultrathink"
