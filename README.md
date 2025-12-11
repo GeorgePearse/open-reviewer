@@ -61,6 +61,28 @@ export OPENROUTER_API_KEY="your-key-here"
 uv run pytest -v
 ```
 
+## Development Setup
+
+### Pre-commit Hooks
+
+This repository uses pre-commit hooks to maintain code quality. Install them locally:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+The hooks include:
+- **ruff** - Python linting and formatting
+- **pyright** - Type checking
+- **prettier** - JavaScript/TypeScript formatting
+- **Standard checks** - Trailing whitespace, file validation
+
+To run hooks manually:
+```bash
+pre-commit run --all-files
+```
+
 ## Usage
 
 ```python
