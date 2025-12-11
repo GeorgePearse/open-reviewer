@@ -24,7 +24,7 @@ jobs:
   prepare-review:
     name: Prepare Review Matrix
     if: github.event_name == 'pull_request'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
       has_chunks: ${{ steps.create-matrix.outputs.has_chunks }}
@@ -141,7 +141,7 @@ jobs:
     name: Review ${{ matrix.job_name }}
     needs: prepare-review
     if: needs.prepare-review.outputs.has_chunks == 'true'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
       group: pr-claude-${{ matrix.job_name }}-${{ github.event.pull_request.number }}
@@ -199,7 +199,7 @@ jobs:
   review-security:
     name: Security Review
     if: github.event_name == 'pull_request'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     concurrency:
       group: pr-claude-security-${{ github.event.pull_request.number }}
       cancel-in-progress: true
